@@ -14,33 +14,39 @@ export class Simulator {
   }
 
   execute(command: string): string | void {
-    const args = command.split(" ");
-    const commandName = args[0];
-
-    if (commandName === "REPORT") {
-      if (this.placed) {
-        return this.robot.report();
-      } else {
-        return "Robot is not placed yet.";
-      }
-    }
-
-    if (commandName !== "PLACE" && !this.placed) {
-      return;
-    }
+    const args = command.split(' ');
+    const commandName = args[0].toUpperCase();
 
     switch (commandName) {
-      case "PLACE":
-        const placeArgs = args[1].split(",");
+      case 'PLACE':
+        if (args.length < 2) {
+          return 'Invalid PLACE command. Missing arguments.';
+        }
+        const placeArgs = args[1].split(',');
+        if (placeArgs.length < 3) {
+          return 'Invalid PLACE command. Please use the format: PLACE X,Y,DIRECTION';
+        }
         const x = parseInt(placeArgs[0], 10);
         const y = parseInt(placeArgs[1], 10);
-        const direction = placeArgs[2] as Direction;
+        const direction = placeArgs[2].toUpperCase() as Direction;
+
+        if (isNaN(x) || isNaN(y)) {
+          return 'Invalid PLACE command. Coordinates must be numbers.';
+        }
+
+        if (!Object.values(Direction).includes(direction)) {
+          return 'Invalid PLACE command. Direction must be one of NORTH, SOUTH, EAST, WEST.';
+        }
+
         if (this.table.isValidPosition(x, y)) {
           this.robot.place(x, y, direction);
           this.placed = true;
+        } else {
+          return 'Invalid PLACE command. Coordinates are off the table.';
         }
         break;
-      case "MOVE":
+      case 'MOVE':
+        if (!this.placed) return 'Robot is not placed yet. Please use the PLACE command first.';
         const newX = this.robot.x;
         const newY = this.robot.y;
         const tempRobot = new ToyRobot();
@@ -50,12 +56,19 @@ export class Simulator {
           this.robot.move();
         }
         break;
-      case "LEFT":
+      case 'LEFT':
+        if (!this.placed) return 'Robot is not placed yet. Please use the PLACE command first.';
         this.robot.left();
         break;
-      case "RIGHT":
+      case 'RIGHT':
+        if (!this.placed) return 'Robot is not placed yet. Please use the PLACE command first.';
         this.robot.right();
         break;
+      case 'REPORT':
+        if (!this.placed) return 'Robot is not placed yet.';
+        return this.robot.report();
+      default:
+        return `Invalid command: ${commandName}`;
     }
   }
 }
